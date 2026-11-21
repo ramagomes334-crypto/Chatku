@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chatku</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<section id="auth" class="screen">
+  <div class="card">
+    <h1>Chatku</h1>
+    <p class="sub">Masuk untuk mulai ngobrol.</p>
+    <input id="name" placeholder="Nama (khusus daftar)">
+    <input id="email" type="email" placeholder="Email">
+    <input id="pass" type="password" placeholder="Kata sandi (min. 6 karakter)">
+    <p id="err" class="err"></p>
+    <button id="btnLogin">Masuk</button>
+    <button id="btnReg" class="ghost">Daftar akun baru</button>
+  </div>
+</section>
+
+<section id="app" class="screen hidden">
+  <aside id="list">
+    <header><strong id="me">Chatku</strong><button id="btnOut" class="ghost sm">Keluar</button></header>
+    <div class="find">
+      <input id="findEmail" type="email" placeholder="Email teman">
+      <button id="btnFind" class="sm">Mulai chat</button>
+    </div>
+    <p id="findErr" class="err"></p>
+    <ul id="chats"></ul>
+  </aside>
+  <main id="room" class="hidden">
+    <header><button id="btnBack" class="ghost sm">‹</button><strong id="peer"></strong></header>
+    <div id="msgs"></div>
+    <div class="send">
+      <input id="text" placeholder="Tulis pesan">
+      <button id="btnSend">Kirim</button>
+    </div>
+  </main>
+</section>
+<script type="module" src="app.js"></script>
+</body>
+</html>

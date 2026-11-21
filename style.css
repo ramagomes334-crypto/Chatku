@@ -1,0 +1,41 @@
+:root{--bg:#eef3f1;--panel:#fff;--ink:#12302b;--soft:#5d7a74;--acc:#1f7a6b;--mine:#1f7a6b;--their:#e3ece9;--line:#d5e2de}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.hidden{display:none!important}
+.screen{height:100%}
+#auth{display:grid;place-items:center;padding:16px}
+.card{background:var(--panel);padding:28px;border-radius:14px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line)}
+h1{margin:0;font-size:1.8rem}
+.sub{margin:0 0 8px;color:var(--soft)}
+input{padding:12px;border:1px solid var(--line);border-radius:8px;font-size:1rem;background:#fff;color:var(--ink);min-width:0}
+input:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button{padding:12px 16px;border:0;border-radius:8px;background:var(--acc);color:#fff;font-size:1rem;cursor:pointer}
+button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line)}
+button.sm{padding:8px 12px;font-size:.9rem}
+.err{color:#b3261e;margin:0;min-height:1em;font-size:.9rem}
+#app{display:flex}
+#list{width:100%;max-width:360px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;border-bottom:1px solid var(--line)}
+.find{display:flex;gap:6px;padding:10px 12px 0}
+.find input{flex:1}
+#findErr{padding:0 12px}
+#chats{list-style:none;margin:0;padding:0;overflow:auto;flex:1}
+#chats li{padding:14px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+#chats li:hover,#chats li.on{background:var(--bg)}
+#chats small{display:block;color:var(--soft)}
+#room{flex:1;display:flex;flex-direction:column;min-width:0}
+#msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:6px}
+.m{max-width:78%;padding:8px 12px;border-radius:14px;background:var(--their);word-wrap:break-word}
+.m.me{align-self:flex-end;background:var(--mine);color:#fff}
+.m time{display:block;font-size:.7rem;opacity:.7;margin-top:2px}
+.send{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:var(--panel)}
+.send input{flex:1}
+#btnBack{display:none}
+@media(max-width:700px){
+  #list{max-width:none}
+  #app.inroom #list{display:none}
+  #room{width:100%}
+  #btnBack{display:inline-block}
+}
+@media(min-width:701px){#room.hidden{display:flex!important;opacity:.4}}
