@@ -32,23 +32,48 @@
 
 <section id="app" class="screen hidden">
   <aside id="list">
-    <header><strong id="me">Chatku</strong><button id="btnOut" class="ghost sm">Keluar</button></header>
+    <header>
+      <button id="btnMe" class="who"><span id="meAv"></span><strong id="me"></strong></button>
+      <button id="btnOut" class="ghost sm">Keluar</button>
+    </header>
     <div class="find">
-      <input id="findEmail" type="email" placeholder="Username teman" autocapitalize="none">
+      <input id="findEmail" placeholder="Username teman" autocapitalize="none">
       <button id="btnFind" class="sm">Mulai chat</button>
     </div>
     <p id="findErr" class="err"></p>
     <ul id="chats"></ul>
   </aside>
   <main id="room" class="hidden">
-    <header><button id="btnBack" class="ghost sm">‹</button><strong id="peer"></strong></header>
+    <header>
+      <button id="btnBack" class="ghost sm">‹</button>
+      <button id="peerBox" class="who"><span id="peerAv"></span><span class="col"><strong id="peer"></strong><small id="status"></small></span></button>
+    </header>
     <div id="msgs"></div>
+    <div id="replybar" class="hidden"><span id="replytxt"></span><button id="btnNoReply" class="ghost sm">✕</button></div>
     <div class="send">
       <input id="text" placeholder="Tulis pesan">
       <button id="btnSend">Kirim</button>
     </div>
   </main>
 </section>
+
+<div id="menu" class="overlay hidden"><div class="sheet">
+  <button id="mReply" class="ghost">Balas</button>
+  <button id="mMe" class="ghost">Hapus untuk saya</button>
+  <button id="mAll" class="ghost">Hapus untuk semua</button>
+  <button id="mCancel">Batal</button>
+</div></div>
+
+<div id="profile" class="overlay hidden"><div class="sheet">
+  <div id="pfAv" class="center"></div>
+  <input id="pfFile" type="file" accept="image/*">
+  <input id="pfName" placeholder="Nama">
+  <input id="pfBio" placeholder="Bio singkat" maxlength="120">
+  <small id="pfUser"></small>
+  <p id="pfErr" class="err"></p>
+  <button id="pfSave">Simpan</button>
+  <button id="pfClose" class="ghost">Tutup</button>
+</div></div>
 <script type="module" src="app.js"></script>
 </body>
 </html>
