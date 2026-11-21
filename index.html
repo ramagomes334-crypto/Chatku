@@ -20,11 +20,21 @@
   </div>
 </section>
 
+<section id="setname" class="screen hidden">
+  <div class="card">
+    <h1>Pilih username</h1>
+    <p class="sub">Teman bisa mencarimu lewat username ini. Huruf kecil, angka, dan _ (3-20 karakter).</p>
+    <input id="uname" placeholder="contoh: rama_01" autocapitalize="none">
+    <p id="unameErr" class="err"></p>
+    <button id="btnUname">Simpan username</button>
+  </div>
+</section>
+
 <section id="app" class="screen hidden">
   <aside id="list">
     <header><strong id="me">Chatku</strong><button id="btnOut" class="ghost sm">Keluar</button></header>
     <div class="find">
-      <input id="findEmail" type="email" placeholder="Email teman">
+      <input id="findEmail" type="email" placeholder="Username teman" autocapitalize="none">
       <button id="btnFind" class="sm">Mulai chat</button>
     </div>
     <p id="findErr" class="err"></p>

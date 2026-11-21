@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDocs, query, where, collection, addDoc, onSnapshot, orderBy, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, getDocs, runTransaction, query, where, collection, addDoc, onSnapshot, orderBy, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -36,13 +36,41 @@ $("btnLogin").onclick = async () => {
 };
 $("btnOut").onclick = () => signOut(auth);
 
-onAuthStateChanged(auth, u => {
+onAuthStateChanged(auth, async u => {
   user = u;
-  $("auth").classList.toggle("hidden", !!u);
-  $("app").classList.toggle("hidden", !u);
   unsubChats && unsubChats(); unsubMsgs && unsubMsgs();
+  $("auth").classList.toggle("hidden", !!u);
+  $("setname").classList.add("hidden");
+  $("app").classList.add("hidden");
   if (!u) return;
-  $("me").textContent = u.displayName || u.email;
+  let uname = null;
+  try { uname = (await getDoc(doc(db, "users", u.uid))).data()?.username; } catch (e) {}
+  if (!uname) { $("setname").classList.remove("hidden"); return; }
+  startApp(u, uname);
+});
+
+$("btnUname").onclick = async () => {
+  $("unameErr").textContent = "";
+  const un = $("uname").value.trim().toLowerCase().replace(/^@/, "");
+  if (!/^[a-z0-9_]{3,20}$/.test(un)) { $("unameErr").textContent = "Gunakan huruf kecil, angka, atau _ (3-20 karakter)."; return; }
+  try {
+    await runTransaction(db, async tx => {
+      const ref = doc(db, "usernames", un);
+      if ((await tx.get(ref)).exists()) throw { code: "taken" };
+      tx.set(ref, { uid: user.uid });
+      tx.set(doc(db, "users", user.uid), {
+        name: user.displayName || user.email.split("@")[0],
+        email: user.email.toLowerCase(), username: un
+      }, { merge: true });
+    });
+    $("setname").classList.add("hidden");
+    startApp(user, un);
+  } catch (e) { $("unameErr").textContent = e.code === "taken" ? "Username sudah dipakai. Coba yang lain." : pesan(e); }
+};
+
+function startApp(u, uname) {
+  $("app").classList.remove("hidden");
+  $("me").textContent = (u.displayName || u.email) + " (@" + uname + ")";
   const q = query(collection(db, "chats"), where("members", "array-contains", u.uid));
   unsubChats = onSnapshot(q, snap => {
     const ul = $("chats"); ul.innerHTML = "";
@@ -50,23 +78,24 @@ onAuthStateChanged(auth, u => {
       const data = d.data();
       const li = document.createElement("li");
       const nama = data.names[data.members.find(x => x !== u.uid)] || "Teman";
-      li.innerHTML = `${nama}<small></small>`;
-      li.querySelector("small").textContent = data.last || "";
+      li.textContent = nama;
+      const sm = document.createElement("small"); sm.textContent = data.last || ""; li.appendChild(sm);
       li.onclick = () => openChat(d.id, nama);
       ul.appendChild(li);
     });
   });
-});
+}
 
 $("btnFind").onclick = async () => {
   $("findErr").textContent = "";
-  const email = $("findEmail").value.trim().toLowerCase();
-  if (!email) return;
+  const un = $("findEmail").value.trim().toLowerCase().replace(/^@/, "");
+  if (!un) return;
   try {
-    const r = await getDocs(query(collection(db, "users"), where("email", "==", email)));
-    if (r.empty) { $("findErr").textContent = "Email itu belum terdaftar di Chatku."; return; }
-    const peer = r.docs[0], pid = peer.id;
-    if (pid === user.uid) { $("findErr").textContent = "Itu email kamu sendiri."; return; }
+    const m = await getDoc(doc(db, "usernames", un));
+    if (!m.exists()) { $("findErr").textContent = "Username itu tidak ditemukan."; return; }
+    const pid = m.data().uid;
+    if (pid === user.uid) { $("findErr").textContent = "Itu username kamu sendiri."; return; }
+    const peer = await getDoc(doc(db, "users", pid));
     const id = [user.uid, pid].sort().join("_");
     await setDoc(doc(db, "chats", id), {
       members: [user.uid, pid],

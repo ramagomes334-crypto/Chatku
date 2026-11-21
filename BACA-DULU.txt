@@ -1,0 +1,6 @@
+Chatku - web chat real-time (Firebase Auth + Firestore)
+1. Isi firebase-config.js dengan config dari Firebase Console.
+2. Aktifkan Authentication (Email/Password) dan Firestore.
+3. Tempel isi firestore.rules ke tab Rules di Firestore, lalu Publish.
+4. Upload semua file ke hosting (Firebase Hosting/Netlify/GitHub Pages).
+Catatan: file harus dibuka lewat https (hosting), bukan langsung dari file manager HP.
