@@ -39,3 +39,5 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;pad
   #btnBack{display:inline-block}
 }
 @media(min-width:701px){#room.hidden{display:flex!important;opacity:.4}}
+.badge{float:right;background:var(--acc);color:#fff;border-radius:999px;min-width:22px;padding:2px 7px;text-align:center;font-size:.8rem}
+.m.me time.r{opacity:1;color:#c8f5ea}

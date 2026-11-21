@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, runTransaction, query, where, collection, addDoc, onSnapshot, orderBy, serverTimestamp }
+import { getFirestore, doc, setDoc, getDoc, getDocs, runTransaction, writeBatch, increment, query, where, collection, addDoc, onSnapshot, orderBy, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -9,6 +9,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const $ = id => document.getElementById(id);
+let currentChat = null, lastSnap = null, prevUnread = {}, firstLoad = true;
 let user = null, unsubChats = null, unsubMsgs = null, peerNames = {};
 
 const pesan = e => ({
@@ -72,17 +73,26 @@ function startApp(u, uname) {
   $("app").classList.remove("hidden");
   $("me").textContent = (u.displayName || u.email) + " (@" + uname + ")";
   const q = query(collection(db, "chats"), where("members", "array-contains", u.uid));
+  firstLoad = true; prevUnread = {};
   unsubChats = onSnapshot(q, snap => {
-    const ul = $("chats"); ul.innerHTML = "";
+    const ul = $("chats"); ul.innerHTML = ""; let total = 0;
     snap.docs.forEach(d => {
       const data = d.data();
-      const li = document.createElement("li");
       const nama = data.names[data.members.find(x => x !== u.uid)] || "Teman";
+      const n = (data.unread && data.unread[u.uid]) || 0;
+      if (!firstLoad && n > (prevUnread[d.id] || 0) && (d.id !== currentChat || document.hidden)) notif(nama, data.last || "Pesan baru");
+      prevUnread[d.id] = n;
+      const shown = d.id === currentChat && !document.hidden ? 0 : n;
+      total += shown;
+      const li = document.createElement("li");
       li.textContent = nama;
+      if (shown) { const b = document.createElement("b"); b.className = "badge"; b.textContent = shown; li.appendChild(b); }
       const sm = document.createElement("small"); sm.textContent = data.last || ""; li.appendChild(sm);
       li.onclick = () => openChat(d.id, nama);
       ul.appendChild(li);
     });
+    firstLoad = false;
+    document.title = (total ? "(" + total + ") " : "") + "Chatku";
   });
 }
 
@@ -106,34 +116,63 @@ $("btnFind").onclick = async () => {
   } catch (e) { $("findErr").textContent = pesan(e); }
 };
 
+function notif(judul, isi) {
+  try { navigator.vibrate && navigator.vibrate(200); } catch (e) {}
+  try { if ("Notification" in window && Notification.permission === "granted") new Notification(judul, { body: isi }); } catch (e) {}
+}
+document.addEventListener("click", () => {
+  if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+}, { once: true });
+
+async function tandaiDibaca() {
+  if (!currentChat || !lastSnap || document.hidden) return;
+  const b = writeBatch(db); let ada = false;
+  lastSnap.docs.forEach(d => {
+    const m = d.data();
+    if (m.from !== user.uid && !m.read) { b.update(d.ref, { read: true }); ada = true; }
+  });
+  try {
+    if (ada) await b.commit();
+    await setDoc(doc(db, "chats", currentChat), { unread: { [user.uid]: 0 } }, { merge: true });
+  } catch (e) {}
+}
+document.addEventListener("visibilitychange", tandaiDibaca);
+
 function openChat(id, nama) {
   unsubMsgs && unsubMsgs();
+  currentChat = id; lastSnap = null;
   $("peer").textContent = nama;
   $("room").classList.remove("hidden");
   $("app").classList.add("inroom");
   $("room").dataset.id = id;
   const q = query(collection(db, "chats", id, "messages"), orderBy("createdAt"));
   unsubMsgs = onSnapshot(q, snap => {
+    lastSnap = snap;
     const box = $("msgs"); box.innerHTML = "";
     snap.docs.forEach(d => {
-      const m = d.data(), el = document.createElement("div");
-      el.className = "m" + (m.from === user.uid ? " me" : "");
+      const m = d.data(), el = document.createElement("div"), mine = m.from === user.uid;
+      el.className = "m" + (mine ? " me" : "");
       const t = m.createdAt ? m.createdAt.toDate().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "…";
       el.textContent = m.text;
-      const tm = document.createElement("time"); tm.textContent = t; el.appendChild(tm);
+      const tm = document.createElement("time");
+      tm.textContent = mine ? t + (m.read ? "  ✓✓ dibaca" : "  ✓ terkirim") : t;
+      if (mine && m.read) tm.className = "r";
+      el.appendChild(tm);
       box.appendChild(el);
     });
     box.scrollTop = box.scrollHeight;
+    tandaiDibaca();
   });
 }
-$("btnBack").onclick = () => $("app").classList.remove("inroom");
+$("btnBack").onclick = () => { currentChat = null; $("app").classList.remove("inroom"); };
 
 async function kirim() {
   const t = $("text").value.trim(), id = $("room").dataset.id;
   if (!t || !id) return;
   $("text").value = "";
-  await addDoc(collection(db, "chats", id, "messages"), { text: t, from: user.uid, createdAt: serverTimestamp() });
-  await setDoc(doc(db, "chats", id), { last: t }, { merge: true });
+  const pid = id.split("_").find(x => x !== user.uid);
+  await addDoc(collection(db, "chats", id, "messages"), { text: t, from: user.uid, read: false, createdAt: serverTimestamp() });
+  await setDoc(doc(db, "chats", id), { last: t, unread: { [pid]: increment(1) } }, { merge: true });
 }
 $("btnSend").onclick = kirim;
 $("text").addEventListener("keydown", e => { if (e.key === "Enter") kirim(); });
